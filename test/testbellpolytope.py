@@ -1,7 +1,7 @@
 '''
 Created on 3 ago. 2019
 
-@author: gsenno
+@authors: rravell,gsenno
 '''
 import unittest
 from bellpolytope import BellPolytope

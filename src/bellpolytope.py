@@ -1,7 +1,7 @@
 '''
 Created on 27 dic. 2018
 
-@author: gsenno
+@authors: rravell,gsenno
 '''
 import numpy as np
 import picos as pic
@@ -58,7 +58,68 @@ class BellPolytope:
     
     def getListOfVertices(self):
         return list(self.getGeneratorForVertices())
+    
+    def getListOfVerticesOfSymmetricSubpolytope(self):
+        return {self._toSymmetricBehaviour(behaviour) for behaviour in self.getListOfVertices()}
+    
+    def _toSymmetricBehaviour(self,behaviour):
+        return Behaviour(self.bellScenario,self._verticesToCG(behaviour.getProbabilityList(), 
+                                                              self.numberOfInputsAlice(), 
+                                                              self.getNumberOfOutputsPerInputAlice(), 
+                                                              self.getNumberOfOutputsPerInputBob()))
+    def _verticesToCG(self,vector, inputs, outputsAlice, outputsBob):
+        vertice = []
+        #Alice's marginals
+        l=0
+        for x in range (0,len(outputsAlice)):
+            s=0
+            for y in range (0,outputsBob[0]):
+                s += vector[l+y]
+            vertice.append(s)
+            for a in range (0,len(outputsBob)):
+                l+=outputsAlice[x]*outputsBob[a]
+        
+        #Bob's marginals
+        l=0
+        for z in range (0,len(outputsAlice)):
+            s=0
+            for t in range (0,outputsAlice[0]):
+                s += vector[l+outputsBob[z]*t]
+            vertice.append(s)
+            l+=outputsAlice[0]*outputsBob[z]
+            
+        #The rest of probabilities
+        s=0
+        for w in range (0,len(outputsAlice)):
+            for x in range (0,len(outputsBob)):
+                vertice.append(vector[s])
+                s+=outputsAlice[w]*outputsBob[x]
+        return self._symmetrise(vertice, inputs)
 
+    def _symmetrise(self,vector,inputs):
+        SymmetricVertices = []
+        #First I transform the vector to CG notation
+        #vector=VerticesToCG(vertices,outputsAlice,outputsBob)
+        #Then I fill the marginals
+        for i in range (0,inputs):
+            SymmetricVertices.append(1/2*(vector[i]+vector[i+inputs]))
+        #I create the matrix with the rest of probabilities
+        CoefficientMatrix=np.zeros((inputs,inputs))
+        s=0
+        for l in range (0,inputs):
+            for w in range (0,inputs):
+                CoefficientMatrix[l][w]=vector[s+2*inputs]
+                s+=1
+        #The rest of probabilities
+        for i in range (0,inputs):
+            SymmetricVertices.append(CoefficientMatrix[i][i])
+        for i in range (0,inputs):
+            for j in range (0,inputs):
+                if (i<j):
+                    SymmetricVertices.append(1/2*(CoefficientMatrix[i][j]+CoefficientMatrix[j][i]))
+        return SymmetricVertices
+
+    
     def contains(self,distribution):
     # Tests if the point distribution is inside the convex Hull of the points D
     # distribution should be a np multidim array
@@ -88,6 +149,4 @@ class BellPolytope:
     #    print(prob)
          
         #get optimal variables and reshape
-        pvalues=np.array(p.value)
         return prob.status=='optimal'
-        #return [prob.status,pvalues]

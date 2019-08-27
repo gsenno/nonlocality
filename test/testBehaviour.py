@@ -1,7 +1,7 @@
 '''
 Created on 13 ago. 2019
 
-@author: gsenno
+@authors: rravell,gsenno
 '''
 import unittest
 from itertools import product

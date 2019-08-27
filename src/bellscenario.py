@@ -1,7 +1,7 @@
 '''
 Created on 16 ago. 2019
 
-@author: gsenno
+@authors: rravell,gsenno
 '''
 
 class BellScenario(object):
